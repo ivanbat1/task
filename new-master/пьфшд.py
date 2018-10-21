@@ -27,6 +27,6 @@ msg.attach(att)
 # So, I use the default port 25, but I authenticate.
 s = smtplib.SMTP('smtp.gmail.com')
 s.starttls()
-s.login('baturin.ivan9@gmail.com','Ivanbaturin1999')
+s.login('baturin.ivan9@gmail.com','pass')
 s.sendmail('baturin.ivan9@gmail.com',['baturin.ivan9@gmail.com'], msg.as_string())
 s.quit()
