@@ -7,9 +7,8 @@ def click_t(name):
         command_executor='http://localhost:9999',
         desired_capabilities={
             "app": r"C:\Program Files (x86)\InstaTrader\terminal.exe"})
-    time.sleep(10)
+
     driver.find_element_by_name('{},H4'.format(name)).click()
     pyautogui.keyDown('alt')
     pyautogui.press('t')
     pyautogui.keyUp('alt')
-click_t()

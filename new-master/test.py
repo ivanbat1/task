@@ -285,24 +285,29 @@ def WinMSGLoop():
 
 if __name__ == "__main__":
     try:
-
+        from selenium import webdriver
+        import time
+        driver = webdriver.Remote(
+            command_executor='http://localhost:9999',
+            desired_capabilities={
+                "app": r'C:\Program Files (x86)\InstaTrader\terminal.exe'})
+        time.sleep(10)
         dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
         dde.advise("EURUSD")  # Подписались на получение котировок для символа EURUSD.
         dde.advise("GBPUSD")  # Подписались на получение котировок для символа GBPUSD.
         dde.advise("USDJPY")  # Подписались на получение котировок для символа USDJPY.
         WinMSGLoop()  # Запустили цикл обработки сообщений.
     except Exception:
-
+        from selenium import webdriver
+        import time
+        driver = webdriver.Remote(
+            command_executor='http://localhost:9999',
+            desired_capabilities={
+                "app": r'C:\Program Files (x86)\InstaTrader\terminal.exe'})
+        time.sleep(10)
         dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
         dde.advise("EURUSD")  # Подписались на получение котировок для символа EURUSD.
         dde.advise("GBPUSD")  # Подписались на получение котировок для символа GBPUSD.
         dde.advise("USDJPY")  # Подписались на получение котировок для символа USDJPY.
         WinMSGLoop()  # Запустили цикл обработки сообщений.
 
-# from pywinauto import application
-# app = application.Application.start("C:\Program Files (x86)\InstaTrader\terminal.exe")
-# app.notepad.TypeKeys("%FX")
-# app.Notepad.MenuSelect("Окно->1USDCHF,H4")
-# app.SaveAs.ComboBox5.Select("UTF-8")
-# app.SaveAs.edit1.SetText("Example-utf8.txt")
-# app.SaveAs.Save.Click()
