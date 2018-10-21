@@ -2,7 +2,7 @@
 import pyautogui
 from selenium import webdriver
 import time
-def click_t(name = 'EURUSD'):
+def click_t(name):
     driver = webdriver.Remote(
         command_executor='http://localhost:9999',
         desired_capabilities={

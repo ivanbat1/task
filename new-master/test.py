@@ -247,7 +247,7 @@ class DDEClient(object):
                 print 'DDE:   ' + str(round(float(value.split(' ')[-1]),4)) + '<--bid, ask-->' +  value.split(' ')[-2]
                 print 'API:   ' + str(float(y['bid'])) + '<--bid, ask-->' + str(float(y['ask']))
                 print 'congrat'
-                # pytest.click_t(y['symbol'])
+                pytest.click_t(y['symbol'])
         print '----'
 
     def _callback(self, wType, uFmt, hConv, hsz1, hsz2, hDdeData, dwData1, dwData2):
