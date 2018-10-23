@@ -10,6 +10,7 @@ import json  # import Json lib
 EXMO_FEE = 0.002
 STOCK_FEE = 0.001
 PROFIT_PIPS = 0.00000005
+
 # +------------------------------------------------------+
 # | Быстрое сохранение списков в файл и чтение
 # +------------------------------------------------------+
@@ -32,6 +33,8 @@ def whileloop():
     g = price2
     return price2
 
+
+
 # DECLARE_HANDLE(name) typedef void *name;
 HCONV = c_void_p  # = DECLARE_HANDLE(HCONV)
 HDDEDATA = c_void_p  # = DECLARE_HANDLE(HDDEDATA)
@@ -40,6 +43,7 @@ LPBYTE = c_char_p  # POINTER(BYTE)
 LPDWORD = POINTER(DWORD)
 LPSTR = c_char_p
 ULONG_PTR = c_ulong
+QUOTER = 0
 
 # Описание структуры CONVCONTEXT см. в windows/ddeml.h
 PCONVCONTEXT = c_void_p
@@ -236,8 +240,6 @@ class DDEClient(object):
 
     def callback(self, value, item=None):
         """Calback function for advice."""
-        # print "%s: %s" % (item, value)
-        # print value
         import pytest
         for y in whileloop():
             sb1 = float(y['bid']) - float(value.split(' ')[-2]) # api bid - dde ask
@@ -269,7 +271,6 @@ def WinMSGLoop():
     """Run the main windows message loop."""
     from ctypes import POINTER, byref, c_ulong
     from ctypes.wintypes import BOOL, HWND, MSG, UINT
-
     LPMSG = POINTER(MSG)
     LRESULT = c_ulong
     GetMessage = get_winfunc("user32", "GetMessageW", BOOL, (LPMSG, HWND, UINT, UINT))
@@ -279,9 +280,12 @@ def WinMSGLoop():
     msg = MSG()
     lpmsg = byref(msg)
     while GetMessage(lpmsg, HWND(), 0, 0) > 0:
+        global QUOTER
+        QUOTER += 1
         TranslateMessage(lpmsg)
         DispatchMessage(lpmsg)
         whileloop()
+
 
 if __name__ == "__main__":
     try:
@@ -291,7 +295,7 @@ if __name__ == "__main__":
             command_executor='http://localhost:9999',
             desired_capabilities={
                 "app": r'C:\Program Files (x86)\InstaTrader\terminal.exe'})
-        time.sleep(10)
+        driver.implicitly_wait(10)
         dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
         dde.advise("EURUSD")  # Подписались на получение котировок для символа EURUSD.
         dde.advise("GBPUSD")  # Подписались на получение котировок для символа GBPUSD.
@@ -304,10 +308,14 @@ if __name__ == "__main__":
             command_executor='http://localhost:9999',
             desired_capabilities={
                 "app": r'C:\Program Files (x86)\InstaTrader\terminal.exe'})
-        time.sleep(10)
+        driver.implicitly_wait(10)
         dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
         dde.advise("EURUSD")  # Подписались на получение котировок для символа EURUSD.
         dde.advise("GBPUSD")  # Подписались на получение котировок для символа GBPUSD.
         dde.advise("USDJPY")  # Подписались на получение котировок для символа USDJPY.
         WinMSGLoop()  # Запустили цикл обработки сообщений.
+
+
+
+
 

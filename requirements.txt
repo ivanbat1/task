@@ -1,0 +1,11 @@
+comtypes==1.1.7
+Pillow==5.3.0
+PyAutoGUI==0.9.38
+PyMsgBox==1.0.6
+PyScreeze==0.1.18
+PyTweening==1.0.3
+pywin32==224
+pywinauto==0.6.5
+selenium==3.14.1
+six==1.11.0
+urllib3==1.24
