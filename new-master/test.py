@@ -2,38 +2,19 @@
 
 from ctypes import POINTER, WINFUNCTYPE, c_void_p, c_int, c_ulong, c_char_p
 from ctypes.wintypes import BOOL, DWORD, LPCWSTR, UINT
-from urllib2 import urlopen, URLError  # import urllib
-# import msvcrt  # Выход из программы по нажатию.
-import json  # import Json lib
-# import requests
+from urllib2 import urlopen
+import json
+import urllib2
+from pythonicMT5 import zmq_python
+import pythonicMT4
+import time
+
 
 EXMO_FEE = 0.002
 STOCK_FEE = 0.001
-PROFIT_PIPS = 0.00000005
-
-# +------------------------------------------------------+
-# | Быстрое сохранение списков в файл и чтение
-# +------------------------------------------------------+
-def ex(pusto):
-    # pa = {"#Ripple":"XRPUSDT","#Litecoin":"LTCUSDT","#Bitcoin":"BTCUSDT"}
-    for x in pusto:
-        x[u'symbol'] = x[u'symbol'].replace('#Ripple','XRPUSDT')
-        x[u'symbol'] = x[u'symbol'].replace('#Litecoin', 'LTCUSDT')
-        x[u'symbol'] = x[u'symbol'].replace('#Bitcoin', 'BTCUSDT')
-        x[u'symbol'] = x[u'symbol'].replace('BCHUSD', 'BCHUSDT')
-
-    return (pusto)
-
-def whileloop():
-    url = "https://quotes.instaforex.com/api/quotesTick?m=json&q=EURUSD,GBPUSD,USDJPY"
-    response = urlopen(url)
-    price2 = json.loads(response.read())
-    price2 = ex(price2)
-    global g
-    g = price2
-    return price2
-
-
+PROFIT_PIPS = -0.000005
+order = ''
+trade = pythonicMT4.zmq_python()
 
 # DECLARE_HANDLE(name) typedef void *name;
 HCONV = c_void_p  # = DECLARE_HANDLE(HCONV)
@@ -116,6 +97,36 @@ XTYP_SHIFT = 4
 
 TIMEOUT_ASYNC = 0xFFFFFFFF
 
+json_quotes = {}
+count_sb = 0
+count_bs = 0
+metatrader5 = zmq_python().get_data('')
+
+
+
+def val(valute_in):
+    global valute
+    valute = valute_in
+
+
+def ex(pusto):
+    for x in pusto:
+        x[u'symbol'] = x[u'symbol'].replace('#Ripple', 'XRPUSDT')
+        x[u'symbol'] = x[u'symbol'].replace('#Litecoin', 'LTCUSDT')
+        x[u'symbol'] = x[u'symbol'].replace('#Bitcoin', 'BTCUSDT')
+        x[u'symbol'] = x[u'symbol'].replace('BCHUSD', 'BCHUSDT')
+
+    return (pusto)
+
+def whileloop():
+    url = "https://quotes.instaforex.com/api/quotesTick?m=json"
+    response = urlopen(url)
+    price2 = json.loads(response.read())
+    price2 = ex(price2)
+    global g
+    g = price2
+    return price2
+
 
 def get_winfunc(libname, funcname, restype=None, argtypes=(), _libcache={}):
     """Retrieve a function from a library, and set the data types."""
@@ -196,7 +207,6 @@ class DDEClient(object):
 
     def advise(self, item, stop=False):
         """Request updates when DDE data changes."""
-        from ctypes import byref
 
         hszItem = DDE.CreateStringHandle(self._idInst, item, 1200)
         hDdeData = DDE.ClientTransaction(LPBYTE(), 0, self._hConv, hszItem, CF_TEXT,
@@ -240,17 +250,79 @@ class DDEClient(object):
 
     def callback(self, value, item=None):
         """Calback function for advice."""
-        import pytest
-        for y in whileloop():
-            sb1 = float(y['bid']) - float(value.split(' ')[-2]) # api bid - dde ask
-            bs1 = float(value.split(' ')[-1]) - float(y['ask']) # dde bid - api ask
-            if y['symbol'] == item and (sb1 >= PROFIT_PIPS or bs1 >= PROFIT_PIPS):
-                print y['symbol'],':'
-                print 'DDE:   ' + str(round(float(value.split(' ')[-1]),4)) + '<--bid, ask-->' +  value.split(' ')[-2]
-                print 'API:   ' + str(float(y['bid'])) + '<--bid, ask-->' + str(float(y['ask']))
-                print 'congrat'
-                pytest.click_t(y['symbol'])
-        print '----'
+        # print '(mt4)', item, value
+        # print '(mt5)', metatrader5
+        for i in range(len(metatrader5)):
+        #     # y['symbol'] - api instaforex просто удалите если ненужно
+        #     # если нужно что-то заменть в мт4 или мт5 какието котировки покажу пример ка это делать,
+        #     # потому что у меня нет наглядного примера какие котировки могт быть и так -
+        #     # item - то котировки мт4, metatrader5[i][0] - это мт5 и просто
+        #     # добавляете ".replace('#Litecoin', 'LTCUSDT')"
+        #     # первое значение это то что нужно заменить второе на что нужно
+        #     # заменить, думаю понятно (я показал на примере мт5)
+        #     # часть кода отвечающая за поиск валютной пары, если нашли нужную простокоментируйте
+        #     # ету часть и разкоментируйте ту которая отвечает за покупку
+            if item == metatrader5[i][0]:
+
+        #         # получение sb1 bs2 если не нужно так же коментируем м в условие иф удаляем эти значения
+        #         # sb1 = float(y['bid']) - float(value.split(' ')[-2])  # api bid - dde ask
+        #         # bs1 = float(value.split(' ')[-1]) - float(y['ask'])  # dde bid - api ask
+                sb2 = float(value.split(' ')[-1]) - float(metatrader5[i][1]) # dde bid - dde mt5 ask
+                bs2 = float(metatrader5[i][2]) - float(value.split(' ')[-2])  # dde mt5 bid - dde ask
+        #         # здесь эсли нужно что-то убарть просто удалите условие в скобках которое ненужно
+        #         #  (sb1 >= PROFIT_PIPS or bs1 >= PROFIT_PIPS) or
+                global json_quotes, count_sb, count_bs
+                if sb2 >= PROFIT_PIPS or bs2 >= PROFIT_PIPS:
+                    if sb2:
+                        count_sb += 1
+                        json_quotes = {metatrader5[i][0]:'bs2 = {}, sb2 = {}'.format(count_bs, count_sb)}
+                    elif bs2:
+                        count_bs += 1
+                        json_quotes = {metatrader5[i][0]:'bs2 = {}, sb2 = {}'.format(count_bs, count_sb)}
+                    print json_quotes
+                    # print 'sb2=', sb2, 'sb2=', bs2
+                    # print item, '(MT4)', (value.split(' ')[-1]), value.split(' ')[-2]
+                    # print item, '(MT5)', metatrader5[i][2], metatrader5[i][1]
+                    # print "====="
+
+            # если вы нашли свою пару пропишите ее вмосто "EURUSD"
+            # y['symbol'] - api instaforex просто удалите если ненужно
+            # часть кода отвечающая за покупку\продажу найденой валютной пары валютной пары,
+            # if "EURUSD" == item == metatrader5[i][0]:
+            #     sb1 = float(y['bid']) - float(value.split(' ')[-2])  # api bid - dde ask
+            #     bs1 = float(value.split(' ')[-1]) - float(y['ask'])  # dde bid - api ask
+            #
+            #     sb2 = float(value.split(' ')[-1]) - float(metatrader5[i][1])  # dde bid - dde mt5 ask
+            #     bs2 = float(metatrader5[i][2]) - float(value.split(' ')[-2])  # dde mt5 bid - dde ask
+            #     global order
+            #         #               здесь эсли нужно что-то убарть просто удалите условие в скобке которое ненужно
+            #     if order != 'Buy' and order != 'Sell' and (sb1 >= PROFIT_PIPS or sb2 >= PROFIT_PIPS):
+            #         print 'Buy'
+            #         order = 'Buy'
+            #         # тут можете установить stop_loss и take_profit самостоятельно,
+            #         # он будет для всех одинаковый, так что выставляете в процентах
+            #         trade.buy_order(symbol=item, stop_loss=0, take_profit=0)
+            #         #   здесь эсли нужно что-то убарть просто удалите условие в скобке которое ненужно
+            #     elif order != 'Buy' and order != 'Sell' and (bs1 >= PROFIT_PIPS or bs2 >= PROFIT_PIPS):
+            #         print 'Sell'
+            #         order = 'Sell'
+            #         # тут можете установить stop_loss и take_profit самостоятельно,
+            #         # он будет для всех одинаковый, так что выставляете в процентах
+            #         trade.sell_order(symbol=item, stop_loss=0, take_profit=0)
+            #
+            #     elif order == 'Buy':
+            #         order = ''
+            #         print 'closeBuy'
+            #         # время в секундах, через которое будет закрываться ордер
+            #         time.sleep(60)
+            #         trade.close_buy_order()
+            #
+            #     elif order == 'Sell':
+            #         order = ''
+            #         print 'closeSell'
+            #         # время в секундах, через которое будет закрываться ордер
+            #         time.sleep(60)
+            #         trade.close_sell_order()
 
     def _callback(self, wType, uFmt, hConv, hsz1, hsz2, hDdeData, dwData1, dwData2):
         # if wType == XTYP_ADVDATA:
@@ -279,43 +351,16 @@ def WinMSGLoop():
     DispatchMessage = get_winfunc("user32", "DispatchMessageW", LRESULT, (LPMSG,))
     msg = MSG()
     lpmsg = byref(msg)
+    # global metatrader5
     while GetMessage(lpmsg, HWND(), 0, 0) > 0:
-        global QUOTER
-        QUOTER += 1
         TranslateMessage(lpmsg)
         DispatchMessage(lpmsg)
-        whileloop()
+        # metatrader5 = zmq_python().get_data('')
 
 
 if __name__ == "__main__":
-    try:
-        from selenium import webdriver
-        import time
-        driver = webdriver.Remote(
-            command_executor='http://localhost:9999',
-            desired_capabilities={
-                "app": r'C:\Program Files (x86)\InstaTrader\terminal.exe'})
-        driver.implicitly_wait(10)
-        dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
-        dde.advise("EURUSD")  # Подписались на получение котировок для символа EURUSD.
-        dde.advise("GBPUSD")  # Подписались на получение котировок для символа GBPUSD.
-        dde.advise("USDJPY")  # Подписались на получение котировок для символа USDJPY.
-        WinMSGLoop()  # Запустили цикл обработки сообщений.
-    except Exception:
-        from selenium import webdriver
-        import time
-        driver = webdriver.Remote(
-            command_executor='http://localhost:9999',
-            desired_capabilities={
-                "app": r'C:\Program Files (x86)\InstaTrader\terminal.exe'})
-        driver.implicitly_wait(10)
-        dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
-        dde.advise("EURUSD")  # Подписались на получение котировок для символа EURUSD.
-        dde.advise("GBPUSD")  # Подписались на получение котировок для символа GBPUSD.
-        dde.advise("USDJPY")  # Подписались на получение котировок для символа USDJPY.
-        WinMSGLoop()  # Запустили цикл обработки сообщений.
-
-
-
-
-
+    dde = DDEClient("MT4", "quote")  # Создали экземпляр клиента DDE.
+    with open('quotes', 'r+') as f:
+        for i in f.readlines():
+            dde.advise(i.replace('\n', ''))
+    WinMSGLoop()  # Запустили цикл обработки сообщений.
