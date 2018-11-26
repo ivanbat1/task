@@ -4,7 +4,6 @@ from ctypes import POINTER, WINFUNCTYPE, c_void_p, c_int, c_ulong, c_char_p
 from ctypes.wintypes import BOOL, DWORD, LPCWSTR, UINT
 from urllib2 import urlopen
 import json
-import urllib2
 from pythonicMT5 import zmq_python
 import pythonicMT4
 import time
@@ -98,16 +97,8 @@ XTYP_SHIFT = 4
 TIMEOUT_ASYNC = 0xFFFFFFFF
 
 json_quotes = {}
-count_sb = 0
-count_bs = 0
+
 metatrader5 = zmq_python().get_data('')
-
-
-
-def val(valute_in):
-    global valute
-    valute = valute_in
-
 
 def ex(pusto):
     for x in pusto:
@@ -253,34 +244,43 @@ class DDEClient(object):
         # print '(mt4)', item, value
         # print '(mt5)', metatrader5
         for i in range(len(metatrader5)):
-        #     # y['symbol'] - api instaforex просто удалите если ненужно
-        #     # если нужно что-то заменть в мт4 или мт5 какието котировки покажу пример ка это делать,
-        #     # потому что у меня нет наглядного примера какие котировки могт быть и так -
-        #     # item - то котировки мт4, metatrader5[i][0] - это мт5 и просто
-        #     # добавляете ".replace('#Litecoin', 'LTCUSDT')"
-        #     # первое значение это то что нужно заменить второе на что нужно
-        #     # заменить, думаю понятно (я показал на примере мт5)
-        #     # часть кода отвечающая за поиск валютной пары, если нашли нужную простокоментируйте
-        #     # ету часть и разкоментируйте ту которая отвечает за покупку
+            count_sb = 0
+            count_bs = 0
+            # y['symbol'] - api instaforex просто удалите если ненужно
+            # если нужно что-то заменть в мт4 или мт5 какието котировки покажу пример ка это делать,
+            # потому что у меня нет наглядного примера какие котировки могт быть и так -
+            # item - то котировки мт4, metatrader5[i][0] - это мт5 и просто
+            # добавляете ".replace('#Litecoin', 'LTCUSDT')"
+            # первое значение это то что нужно заменить второе на что нужно
+            # заменить, думаю понятно (я показал на примере мт5)
+            # часть кода отвечающая за поиск валютной пары, если нашли нужную простокоментируйте
+            # ету часть и разкоментируйте ту которая отвечает за покупку
             if item == metatrader5[i][0]:
-
-        #         # получение sb1 bs2 если не нужно так же коментируем м в условие иф удаляем эти значения
-        #         # sb1 = float(y['bid']) - float(value.split(' ')[-2])  # api bid - dde ask
-        #         # bs1 = float(value.split(' ')[-1]) - float(y['ask'])  # dde bid - api ask
-                sb2 = float(value.split(' ')[-1]) - float(metatrader5[i][1]) # dde bid - dde mt5 ask
-                bs2 = float(metatrader5[i][2]) - float(value.split(' ')[-2])  # dde mt5 bid - dde ask
-        #         # здесь эсли нужно что-то убарть просто удалите условие в скобках которое ненужно
-        #         #  (sb1 >= PROFIT_PIPS or bs1 >= PROFIT_PIPS) or
-                global json_quotes, count_sb, count_bs
-                if sb2 >= PROFIT_PIPS or bs2 >= PROFIT_PIPS:
-                    if sb2:
+                    # получение sb1 bs2 если не нужно так же коментируем м в условие иф удаляем эти значения
+                    # sb1 = float(y['bid']) - float(value.split(' ')[-2])  # api bid - dde ask
+                    # bs1 = float(value.split(' ')[-1]) - float(y['ask'])  # dde bid - api ask
+                    sb2 = float(value.split(' ')[-1]) - float(metatrader5[i][1])   # dde bid - dde mt5 ask
+                    bs2 = float(metatrader5[i][2]) - float(value.split(' ')[-2])  # dde mt5 bid - dde ask
+                    # здесь эсли нужно что-то убарть просто удалите условие в скобках которое ненужно
+                    #  (sb1 >= PROFIT_PIPS or bs1 >= PROFIT_PIPS) or
+                    global json_quotes
+                    # if sb2 >= PROFIT_PIPS or bs2 >= PROFIT_PIPS:
+                    if sb2 >= PROFIT_PIPS:
                         count_sb += 1
-                        json_quotes = {metatrader5[i][0]:'bs2 = {}, sb2 = {}'.format(count_bs, count_sb)}
-                    elif bs2:
+                        if json_quotes.get(item) == None:
+                            json_quotes[item] = 'sb = {} bs = {}'.format(count_sb, count_bs)
+                        else:
+                            num = [int(s) for s in json_quotes.get(item).split() if s.isdigit()]
+                            json_quotes[item] = 'sb = {} bs = {}'.format(count_sb+num[0], num[1])
+                    elif bs2 >= PROFIT_PIPS:
                         count_bs += 1
-                        json_quotes = {metatrader5[i][0]:'bs2 = {}, sb2 = {}'.format(count_bs, count_sb)}
+                        if json_quotes.get(item) == None:
+                            json_quotes[item] = 'sb = {} bs = {}'.format(count_sb, count_bs)
+                        else:
+                            num = [int(s) for s in json_quotes.get(item).split() if s.isdigit()]
+                            json_quotes[item] = 'sb = {} bs = {}'.format(num[0], count_bs+num[1])
                     print json_quotes
-                    # print 'sb2=', sb2, 'sb2=', bs2
+                #     print item, 'sb2=', sb2, 'sb2=', bs2
                     # print item, '(MT4)', (value.split(' ')[-1]), value.split(' ')[-2]
                     # print item, '(MT5)', metatrader5[i][2], metatrader5[i][1]
                     # print "====="
@@ -363,4 +363,5 @@ if __name__ == "__main__":
     with open('quotes', 'r+') as f:
         for i in f.readlines():
             dde.advise(i.replace('\n', ''))
-    WinMSGLoop()  # Запустили цикл обработки сообщений.
+    WinMSGLoop()# Запустили цикл обработки сообщений.
+
